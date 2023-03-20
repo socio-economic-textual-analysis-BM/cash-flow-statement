@@ -1,0 +1,48 @@
+import pdfplumber
+import pandas as pd
+import re
+check_list = ['consolidated', 'period', 'cash flow.*?', 'activities']
+# using regex might be better, problems like cash flow[s]; multiple pages have to be dealt with.
+
+def find_page(text):
+    pdfs = pdfplumber.open(text)
+    for p in range(0, len(pdfs.pages)):
+        verify = pdfs.pages[p].extract_text()[:500].lower()
+        pattern = re.compile(r'|'.join(check_list))
+        results = pattern.findall(verify)
+        if (len(results) >= len(check_list)) == True:
+                return p
+        else:
+                pass 
+                def find_data(text):
+    p = find_page(text)
+    page_1 = pdfplumber.open(text).pages[p].extract_text() 
+    page_2 = pdfplumber.open(text).pages[p+1].extract_text() 
+    raw = page_1 + ' ' + page_2
+    raw1 = raw.replace('(', '-').replace(')', '').replace(',', '').split('\n')
+    data = []
+    data1 = []
+    label = []
+    for sent in raw1:
+        try:
+            words = sent.split(' ')
+            data.append(words[-1])
+            label.append(' '.join(words[:-1]))
+            data1.append(words[-2])
+        except:
+            data1.append('none')
+    cash_flow = {'cash flow': label, 'old year': data1, 'new year': data}
+    company_ap = pd.DataFrame(cash_flow)
+    return company_ap  
+
+company_ap_s = []
+for year in range(2000, 2005):
+    try:
+        text = open(f'path/{year}.pdf', 'rb')
+        company_ap = find_data(text)
+        new_col = {'cash flow': year}
+        company_ap = company_ap.rename(columns=new_col)
+        company_ap_s.append(company_ap)
+    except:
+        pass
+company_ap_s.to_excel('path.xlsx')
