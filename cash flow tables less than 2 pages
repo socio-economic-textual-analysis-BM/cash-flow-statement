@@ -45,4 +45,6 @@ for year in range(2000, 2005):
         company_ap_s.append(company_ap)
     except:
         pass
-company_ap_s.to_excel('path.xlsx')
+
+tables = pd.concat(company_ap_s, axis=1)
+tables.to_excel('path.xlsx')
